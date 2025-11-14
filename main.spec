@@ -35,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['C:\\Users\\matheusr\\Documents\\DBX-V1\\DBX\\dbx-icon2.ico'],
+    icon=['C:\\Users\\matheusr\\Documents\\DBX-V2\\dbx-icon2.ico'],
 )
