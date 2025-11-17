@@ -30,7 +30,7 @@ class HistoryManager:
     def save_project(self, project_number, pieces_df):
         history = self._load_history()
         df_copy = pieces_df.copy()
-        # Garante que a coluna 'furos' seja uma lista serializável em JSON
+# salva o histoico de projetos em formato json
         df_copy['furos'] = df_copy['furos'].apply(lambda x: x if isinstance(x, list) else [])
         pieces_list = df_copy.to_dict('records')
         
@@ -47,4 +47,4 @@ class HistoryManager:
             del history[project_number]
             self._save_history(history)
             return True
-        return False
+        return False 

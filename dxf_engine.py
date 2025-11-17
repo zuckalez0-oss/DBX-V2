@@ -1,4 +1,4 @@
-# dxf_engine.py
+# motor de geração e leitura de arquivos DXF
 
 import re
 import math
@@ -19,7 +19,7 @@ def create_dxf_drawing(params: dict):
 
         shape_type = params.get('shape')
         
-        # Dicionário de formas, agora incluindo o trapézio
+
         shape_creators = {
             'rectangle': lambda m, p: m.add_lwpolyline([(0,0),(p.get('width', 0),0),(p.get('width', 0),p.get('height', 0)),(0,p.get('height', 0))], close=True),
             'circle': lambda m, p: m.add_circle(center=(p.get('diameter', 0)/2, p.get('diameter', 0)/2), radius=p.get('diameter', 0)/2),
@@ -48,18 +48,17 @@ def create_dxf_drawing(params: dict):
         print(f"Erro inesperado no desenho do DXF: {e}")
         return None, "Erro interno de desenho."
 
-def prepare_and_validate_dxf_data(raw_data: dict): # <<<--- NOME CORRIGIDO AQUI
+def prepare_and_validate_dxf_data(raw_data: dict): 
     """Prepara e valida os dados para a geração do DXF (sem cotas ou texto)."""
     params = raw_data.copy()
 
-    # Mapeamento de nomes de colunas
+
     params['part_name'] = params.get('nome_arquivo')
     params['shape'] = params.get('forma')
     params['width'] = params.get('largura')
     params['height'] = params.get('altura')
     params['diameter'] = params.get('diametro')
-    
-    # Desliga permanentemente cotas e texto para o DXF
+
     params['include_dims'] = False 
     params['include_text_info'] = False
     
@@ -71,7 +70,6 @@ def prepare_and_validate_dxf_data(raw_data: dict): # <<<--- NOME CORRIGIDO AQUI
         try: return float(str(value).replace(',', '.'))
         except (ValueError, TypeError): return default
 
-    # Lista completa de chaves numéricas
     numeric_keys = [
         'width', 'height', 'diameter', 'rt_base', 'rt_height', 
         'trapezoid_large_base', 'trapezoid_small_base', 'trapezoid_height'
@@ -79,7 +77,7 @@ def prepare_and_validate_dxf_data(raw_data: dict): # <<<--- NOME CORRIGIDO AQUI
     for key in numeric_keys:
         params[key] = to_float(params.get(key))
         
-    # Converte furos
+
     params['holes'] = []
     if 'furos' in params and isinstance(params['furos'], list):
         for furo_pyqt in params['furos']:
@@ -91,7 +89,6 @@ def prepare_and_validate_dxf_data(raw_data: dict): # <<<--- NOME CORRIGIDO AQUI
             
     return params, None
 
-# --- FUNÇÕES DE LEITURA DE DXF ---
 
 def get_dxf_bounding_box(file_path: str):
     """
@@ -104,12 +101,11 @@ def get_dxf_bounding_box(file_path: str):
         doc = ezdxf.readfile(file_path)
         msp = doc.modelspace()
 
-        # Calcula o bounding box de todas as entidades no modelspace
         cache = bbox.Cache()
         overall_bbox = bbox.extents(msp, cache=cache)
 
         if not overall_bbox.has_data:
-            return None, None # Retorna None se o DXF estiver vazio
+            return None, None 
 
         return overall_bbox.size.x, overall_bbox.size.y
     except (IOError, ezdxf.DXFStructureError) as e:

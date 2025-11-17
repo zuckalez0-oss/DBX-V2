@@ -49,21 +49,20 @@ def _merge_scraps(scraps):
                         r1['altura'] += r2['altura']
                         merged = True
 
-                # Tenta fusão horizontal
                 elif abs(r1['y'] - r2['y']) < TOLERANCE and abs(r1['altura'] - r2['altura']) < TOLERANCE:
                     if abs((r1['x'] + r1['largura']) - r2['x']) < TOLERANCE:
                         r1['largura'] += r2['largura']
                         merged = True
                     elif abs((r2['x'] + r2['largura']) - r1['x']) < TOLERANCE:
-                        # r1 está à direita de r2, expande r1 para a esquerda
+
                         r1['x'] = r2['x']
                         r1['largura'] += r2['largura']
                         merged = True
 
                 if merged:
                     scraps.pop(j)
-                    merged_in_pass = True # Não incrementa 'j' para que o próximo item
-                    # (que agora está no índice 'j') seja verificado na próxima iteração do loop.
+                    merged_in_pass = True 
+
                 else:
                     j += 1
             i += 1
@@ -81,7 +80,7 @@ def encontrar_sobras(chapa_largura, chapa_altura, pecas_alocadas, min_dim=50, fo
     """
     logging.debug("Iniciando 'encontrar_sobras' com algoritmo de varredura (Scanline).")
 
-    # 1. Coletar todas as coordenadas Y únicas (eventos da linha de varredura).
+
     y_coords = {0, chapa_altura}
     for p in pecas_alocadas:
         y_coords.add(p['y'])
@@ -90,7 +89,7 @@ def encontrar_sobras(chapa_largura, chapa_altura, pecas_alocadas, min_dim=50, fo
     sorted_y = sorted(list(y_coords))
     sobras_brutas = []
 
-    # 2. Iterar sobre cada faixa horizontal (strip) criada pelas coordenadas Y.
+
     for i in range(len(sorted_y) - 1):
         y1, y2 = sorted_y[i], sorted_y[i+1]
         altura_faixa = y2 - y1
@@ -98,14 +97,14 @@ def encontrar_sobras(chapa_largura, chapa_altura, pecas_alocadas, min_dim=50, fo
         if altura_faixa < 1e-5:
             continue
 
-        # Encontra todas as peças que se sobrepõem a esta faixa horizontal.
+ 
         mid_y = y1 + altura_faixa / 2
         pecas_na_faixa = [p for p in pecas_alocadas if p['y'] <= mid_y < (p['y'] + p['altura'])]
         
-        # 3. Ordena as peças na faixa pelo eixo X para encontrar os vãos.
+
         pecas_na_faixa.sort(key=lambda p: p['x'])
 
-        # 4. Encontra os espaços vazios (vãos) no eixo X.
+
         ponteiro_x = 0
         for p in pecas_na_faixa:
             if p['x'] > ponteiro_x:
@@ -117,7 +116,7 @@ def encontrar_sobras(chapa_largura, chapa_altura, pecas_alocadas, min_dim=50, fo
                     })
             ponteiro_x = max(ponteiro_x, p['x'] + p['largura'])
         
-        # 5. Verifica se há um último vão após a última peça até a borda da chapa.
+
         if ponteiro_x < chapa_largura:
             largura_sobra = chapa_largura - ponteiro_x
             if largura_sobra > 1e-5:
@@ -126,23 +125,20 @@ def encontrar_sobras(chapa_largura, chapa_altura, pecas_alocadas, min_dim=50, fo
                     'largura': largura_sobra, 'altura': altura_faixa
                 })
 
-    # 6. Fundir os retângulos de sobra adjacentes para formar peças maiores.
     sobras_fundidas = _merge_scraps(sobras_brutas)
 
-    # 7. Filtrar pelo tamanho mínimo e classificar
+
     sobras_finais = []
     for s in sobras_fundidas:
-        # --- INÍCIO DA CORREÇÃO ---
-        # Se force_aproveitavel for True, ignora o min_dim e trata tudo como aproveitável.
-        # A verificação de dimensão mínima só se aplica se não for forçado.
+
         if force_aproveitavel or (s['largura'] >= min_dim and s['altura'] >= min_dim):
             s['y'] = chapa_altura - s['y'] - s['altura']
             
-            # Se forçado, tudo é 'aproveitavel'. Senão, usa a regra padrão.
+
             s['tipo_sobra'] = 'aproveitavel' if force_aproveitavel or (min(s['largura'], s['altura']) >= 300 and max(s['largura'], s['altura']) >= 300) else 'nao_aproveitavel'
-            # --- FIM DA CORREÇÃO ---
+
             
-            # ATRIBUIÇÃO DE PONTUAÇÃO DE REUTILIZAÇÃO
+
             score = 0
             area = s['largura'] * s['altura']
             
@@ -199,7 +195,7 @@ def calcular_plano_de_corte_em_bins(pecas, offset, espessura, is_guillotine, bin
             return 0
         return (area_mm2 / 1_000_000) * espessura * peso_especifico_base
     
-    # LÓGICA DE FUSÃO DE FORMAS (Triângulos, Trapézios)
+
     pecas_processadas = []
     trapezios = [p for p in pecas if p.get('forma') == 'trapezoid']
     outras_pecas = [p for p in pecas if p.get('forma') not in ['trapezoid']]
@@ -248,7 +244,7 @@ def calcular_plano_de_corte_em_bins(pecas, offset, espessura, is_guillotine, bin
             }
             peca_unica_id += 1
 
-    # ESTRATÉGIA DE BUSCA OTIMIZADA
+
     todos_algoritmos = [MaxRectsBssf, MaxRectsBaf, MaxRectsBlsf, SkylineBl, SkylineMwf, SkylineBlWm, SkylineMwfl]
     melhor_resultado_final = None
     num_pecas = len(retangulos_para_alocar)
@@ -281,7 +277,7 @@ def calcular_plano_de_corte_em_bins(pecas, offset, espessura, is_guillotine, bin
                 area_total_utilizada_com_offset = 0
 
                 for bin_node in packer:
-                    if not bin_node: continue # Pula bins vazios
+                    if not bin_node: continue 
                     chapa_largura, chapa_altura, margin = bin_node.bid
                     nesting_width, nesting_height = chapa_largura - (2 * margin), chapa_altura - (2 * margin)
                     chapa_alocada = [r for r in bin_node if hasattr(r, 'x')]
@@ -308,7 +304,7 @@ def calcular_plano_de_corte_em_bins(pecas, offset, espessura, is_guillotine, bin
 
                             plano_de_corte.append({
                                 "x": margin + r.x + (offset / 2),
-                                "y": (chapa_altura - margin) - (r.y + r.height) + (offset / 2), # Invertido para origem no topo
+                                "y": (chapa_altura - margin) - (r.y + r.height) + (offset / 2), 
                                 "largura": r.width - offset, "altura": r.height - offset,
                                 "tipo_key": tipo_key, "furos": furos_trans, "forma": forma, "rid": r.rid, "diametro": peca_info['diametro'],
                                 "orig_dims": peca_info.get('orig_dims'), "dxf_path": peca_info['dxf_path']
@@ -316,8 +312,7 @@ def calcular_plano_de_corte_em_bins(pecas, offset, espessura, is_guillotine, bin
                         
                         resumo_pecas = [{"tipo": t, "qtd": q} for t, q in pecas_contagem.items()]
                         pecas_para_geometria = [{'x': r.x, 'y': r.y, 'largura': r.width, 'altura': r.height} for r in chapa_alocada]
-                        # --- INÍCIO DA CORREÇÃO ---
-                        # Verifica se o nome do projeto indica material especial
+
                         project_name = os.environ.get('CURRENT_PROJECT_NAME', '').upper()
                         force_aproveitavel = any(mat in project_name for mat in ['FF', 'GALV', 'XADREZ'])
                         sobras_na_area_nesting = encontrar_sobras(nesting_width, nesting_height, pecas_para_geometria, force_aproveitavel=force_aproveitavel)
@@ -331,45 +326,43 @@ def calcular_plano_de_corte_em_bins(pecas, offset, espessura, is_guillotine, bin
                         planos_agrupados[assinatura]["repeticoes"] += 1
                     
                     area_total_utilizada_com_offset += sum(r.width * r.height for r in chapa_alocada)
-                
-                # Calcula o aproveitamento para esta solução específica (para este algoritmo).
+
                 area_total_chapas = sum(p['chapa_largura'] * p['chapa_altura'] * p['repeticoes'] for p in planos_agrupados.values())
                 
-                # Para calcular a área real, precisamos iterar sobre todas as peças em todos os planos únicos
+
                 area_real_pecas = 0
-                # --- INÍCIO: LÓGICA ESPECIAL PARA CÍRCULOS ---
+
                 area_bounding_box_pecas = 0
                 is_only_circles = all(id_peca_map[r['rid']].get('forma') == 'circle' for plano in planos_agrupados.values() for r in plano['plano'])
 
                 for plano in planos_agrupados.values():
                     for r in plano['plano']:
                         peca_info = id_peca_map[r['rid']]
-                        # --- OTIMIZAÇÃO: Cálculo de área real por forma ---
+
                         if peca_info.get('forma') == 'circle':
                             area_real_pecas += (math.pi * (peca_info['diametro'] / 2)**2) * plano['repeticoes']
                         elif peca_info.get('forma') == 'right_triangle':
-                            # A área de um triângulo é (base*altura)/2.
+
                             area_real_pecas += (peca_info['largura_sem_offset'] * peca_info['altura_sem_offset'] * 0.5) * plano['repeticoes']
                         elif peca_info.get('forma') in ['trapezoid', 'paired_trapezoid']:
-                            # A área de um trapézio é ((B+b)*h)/2. Um par tem o dobro.
+
                             fator = 0.5 if peca_info.get('forma') == 'trapezoid' else 1.0
                             dims = peca_info['orig_dims']
                             area_real_pecas += ((dims['large_base'] + dims['small_base']) * dims['height'] * fator) * plano['repeticoes']
                         else:
-                            # Para retângulos e DXFs (usa bounding box como aproximação)
+
                             area_real_pecas += (peca_info['largura_sem_offset'] * peca_info['altura_sem_offset']) * plano['repeticoes']
-                        # --- FIM DA OTIMIZAÇÃO ---
+
                         
-                        # Calcula a área do bounding box para a lógica de sucata
+
                         area_bounding_box_pecas += (peca_info['largura_sem_offset'] * peca_info['altura_sem_offset']) * plano['repeticoes']
                 
-                # Define qual área de peça usar para o cálculo da sucata
+
                 area_pecas_para_sucata = area_bounding_box_pecas if is_only_circles else area_real_pecas
-                # --- FIM: LÓGICA ESPECIAL PARA CÍRCULOS ---
+
 
                 aproveitamento_geral = (area_real_pecas / area_total_chapas) * 100 if area_total_chapas > 0 else 0
 
-                # Armazena a solução válida junto com seu aproveitamento.
                 solucoes_validas_nesta_iteracao.append({
                     'aproveitamento': aproveitamento_geral,
                     'planos_agrupados': planos_agrupados,
@@ -385,7 +378,7 @@ def calcular_plano_de_corte_em_bins(pecas, offset, espessura, is_guillotine, bin
             planos_unicos = list(melhor_solucao_iteracao['planos_agrupados'].values())
             total_chapas = sum(p['repeticoes'] for p in planos_unicos)
 
-            # CÁLCULO DETALHADO DE SUCATA E PESOS
+
             total_area_sobra_aproveitavel, total_area_sobra_sucata = 0, 0
             sobras_aproveitaveis_detalhado, sucatas_dimensionadas_detalhado = [], []
             for plano in planos_unicos:
@@ -400,20 +393,19 @@ def calcular_plano_de_corte_em_bins(pecas, offset, espessura, is_guillotine, bin
                         sucatas_dimensionadas_detalhado.append(item)
 
             area_offset_total = melhor_solucao_iteracao['area_total_utilizada_com_offset'] - melhor_solucao_iteracao['area_real_pecas']
-            # --- CORREÇÃO: Ajusta o cálculo do offset para o caso especial de círculos e outras formas não retangulares ---
-            # A área de offset é a diferença entre a área do bounding box com offset e a área do bounding box sem offset.
+
             area_offset_total = melhor_solucao_iteracao['area_total_utilizada_com_offset'] - area_bounding_box_pecas
 
             area_demais_sucatas = melhor_solucao_iteracao['area_total_chapas'] - melhor_solucao_iteracao['area_real_pecas'] - total_area_sobra_aproveitavel - total_area_sobra_sucata - area_offset_total
-            # --- OTIMIZAÇÃO: Garante que a área de perda de processo nunca seja negativa ---
+
             area_demais_sucatas = max(0, area_demais_sucatas)
-            # --- FIM DA OTIMIZAÇÃO ---
+
 
             sucata_detalhada = {
-                # --- INÍCIO: LÓGICA DE PERDA PARA GUILHOTINA ---
-                # Se for guilhotina, a perda por offset é zero.
+
+
                 "peso_offset": 0 if is_guillotine else _calc_peso(area_offset_total),
-                # --- FIM: LÓGICA DE PERDA PARA GUILHOTINA ---
+
                 "peso_offset": _calc_peso(area_offset_total),
                 "sobras_aproveitaveis": sobras_aproveitaveis_detalhado,
                 "sucatas_dimensionadas": sucatas_dimensionadas_detalhado,
@@ -445,13 +437,13 @@ def calcular_plano_de_corte_em_bins(pecas, offset, espessura, is_guillotine, bin
             melhor_resultado_final['percentual_sobras_aproveitaveis'] = percentual_sobras_aproveitaveis
             melhor_resultado_final['percentual_perda_total_sucata'] = percentual_perda_total_sucata
             
-            break # Encontramos a melhor solução, podemos sair do loop principal.
+            break 
 
     if melhor_resultado_final:
         logging.info(f"Cálculo finalizado. Melhor resultado: {melhor_resultado_final['total_chapas']} chapas, {melhor_resultado_final['aproveitamento_geral']} de aproveitamento.")
     else:
         logging.warning("Nenhum resultado de cálculo foi gerado. Todas as peças podem não ter cabido nas chapas disponíveis.")
-        # Retorna um dicionário vazio ou None para indicar falha
+
         return None 
         
     return melhor_resultado_final

@@ -1,4 +1,4 @@
-# code_manager.py
+# gerenciador dos códigos únicos das peças - desenvolvido para controle interno das peças.
 
 import pandas as pd
 from datetime import datetime

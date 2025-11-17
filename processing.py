@@ -1,4 +1,4 @@
-# processing.py
+# arquivo de processamento de dados em segundo plano
 
 import os
 import zipfile
@@ -47,7 +47,7 @@ class ProcessThread(QThread):
                     pdf_filename = os.path.join(pdf_output_dir, f"{self.project_number}_Desenhos_PDF_Espessura_{espessura_str}mm.pdf")
                     c = canvas.Canvas(pdf_filename, pagesize=A4)
                     for _, row in group.iterrows():
-                        # Usa a função do módulo pdf_generator
+ 
                         pdf_generator.desenhar_forma(c, row)
                         c.showPage()
                     c.save()

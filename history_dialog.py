@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (QDialog, QHBoxLayout, QVBoxLayout, QGroupBox,
                              QListWidget, QTableWidget, QTableWidgetItem, 
                              QPushButton, QMessageBox)
 
-# A ÚNICA importação de outro módulo do nosso projeto deve ser esta:
+
 from history_manager import HistoryManager
 
 class HistoryDialog(QDialog):
@@ -17,14 +17,14 @@ class HistoryDialog(QDialog):
 
         layout = QHBoxLayout(self)
 
-        # Painel esquerdo com a lista de projetos
+
         left_panel = QGroupBox("Projetos Salvos")
         left_layout = QVBoxLayout()
         self.project_list_widget = QListWidget()
         left_layout.addWidget(self.project_list_widget)
         left_panel.setLayout(left_layout)
 
-        # Painel direito com os detalhes das peças
+
         right_panel = QGroupBox("Peças do Projeto")
         right_layout = QVBoxLayout()
         self.pieces_table_widget = QTableWidget()
@@ -44,14 +44,13 @@ class HistoryDialog(QDialog):
 
         layout.addWidget(left_panel, 1)
         layout.addWidget(right_panel, 3)
-        
-        # Conexões
+
         self.project_list_widget.currentItemChanged.connect(self.display_project_details)
         self.load_btn.clicked.connect(self.load_project)
         self.delete_btn.clicked.connect(self.delete_project)
         close_btn.clicked.connect(self.reject)
         
-        # Inicialização
+
         self.populate_project_list()
         self.update_buttons_state()
 
@@ -70,7 +69,7 @@ class HistoryDialog(QDialog):
         pieces = self.history_manager.get_project_data(project_number)
 
         if pieces:
-            # Pega as chaves do primeiro dicionário como cabeçalhos
+
             headers = list(pieces[0].keys()) if pieces else []
             self.pieces_table_widget.setColumnCount(len(headers))
             self.pieces_table_widget.setHorizontalHeaderLabels([h.replace('_', ' ').title() for h in headers])
