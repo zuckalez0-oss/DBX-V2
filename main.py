@@ -30,13 +30,8 @@ from nesting_dialog import NestingDialog
 from dxf_engine import get_dxf_bounding_box # <<< IMPORTAÇÃO NECESSÁRIA >>>
 from calculo_cortes import orquestrar_planos_de_corte
 
-# =============================================================================
-# ESTILO VISUAL DA APLICAÇÃO (QSS - Qt StyleSheet)
-# =============================================================================
-INOVA_PROCESS_STYLE = """
-/* ================================================================================
-    Estilo INOVA PROCESS (v9 - Tema Claro e Limpo)
-================================================================================ */
+
+STYLE = """
 
 /* Fundo principal e cor de texto padrão */
 QWidget {
@@ -181,14 +176,7 @@ QScrollBar::handle:horizontal:hover { background: #95a5a6; }
 QScrollBar::add-line, QScrollBar::sub-line { border: none; background: none; }
 """
 
-# =============================================================================
-# (NOVO) ESTILO VISUAL DARK
-# =============================================================================
-INOVA_PROCESS_STYLE_DARK = """
-/* ================================================================================
-    Estilo INOVA PROCESS (v9 - Tema Escuro)
-================================================================================ */
-
+DARK = """
 /* Fundo principal e cor de texto padrão */
 QWidget {
     background-color: #2c3e50; /* Azul escuro/cinza para o fundo */
@@ -290,9 +278,6 @@ QScrollBar::handle:horizontal:hover { background: #95a5a6; }
 QScrollBar::add-line, QScrollBar::sub-line { border: none; background: none; }
 """
 
-# =============================================================================
-# CLASSE PRINCIPAL DA INTERFACE GRÁFICA
-# =============================================================================
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -302,7 +287,7 @@ class MainWindow(QMainWindow):
 
         self.code_generator = CodeGenerator()
         self.history_manager = HistoryManager()
-        self.is_dark_theme = False # <<< NOVO: CONTROLA O TEMA ATUAL
+        self.is_dark_theme = False 
         
         self.colunas_df = ['nome_arquivo', 'forma', 'espessura', 'qtd', 'largura', 'altura', 'diametro', 'rt_base', 'rt_height', 'trapezoid_large_base', 'trapezoid_small_base', 'trapezoid_height', 'furos']
         self.colunas_df = ['nome_arquivo', 'forma', 'espessura', 'qtd', 'largura', 'altura', 'diametro', 'rt_base', 'rt_height', 'trapezoid_large_base', 'trapezoid_small_base', 'trapezoid_height', 'furos', 'dxf_path']
@@ -311,8 +296,8 @@ class MainWindow(QMainWindow):
         self.furos_atuais = []
         self.project_directory = None
 
-        self.initUI() # Chama o método que constrói a UI
-        self.connect_signals() # Chama o método que conecta os eventos
+        self.initUI() 
+        self.connect_signals() 
         
         self.set_initial_button_state()
         self.update_dimension_fields(self.forma_combo.currentText())
@@ -322,20 +307,20 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
 
-        # --- Layout Superior (Inputs e Furos) ---
+
         top_h_layout = QHBoxLayout()
         
-        # <<< MUDANÇA ESTRUTURAL 1: PAINEL ESQUERDO COM LARGURA MÍNIMA >>>
+   
         left_panel_widget = QWidget()
         left_v_layout = QVBoxLayout(left_panel_widget)
-        left_v_layout.setContentsMargins(0,0,0,0) # Remove margens internas
-        left_panel_widget.setMinimumWidth(500) # Impede o "esmagamento" e dá mais espaço aos inputs
+        left_v_layout.setContentsMargins(0,0,0,0) 
+        left_panel_widget.setMinimumWidth(500) 
 
-        # --- Grupo 1: Projeto ---
+
         project_group = QGroupBox("1. Projeto")
-        project_layout = QHBoxLayout() # Alterado para QHBoxLayout para colocar botões lado a lado
+        project_layout = QHBoxLayout() 
         self.start_project_btn = QPushButton("Iniciar Novo Projeto...")
-        self.theme_toggle_btn = QPushButton("🌙 Tema Escuro") # <<< NOVO BOTÃO DE TEMA
+        self.theme_toggle_btn = QPushButton("🌙 Tema Escuro")
         self.history_btn = QPushButton("Ver Histórico de Projetos")
         project_layout.addWidget(self.start_project_btn)
         project_layout.addWidget(self.theme_toggle_btn)
@@ -343,28 +328,27 @@ class MainWindow(QMainWindow):
         project_group.setLayout(project_layout)
         left_v_layout.addWidget(project_group)
         
-        # --- (NOVO) Grupo 2: Parâmetros de Custo ---
+
         cost_group = QGroupBox("2. Parâmetros de Custo")
         cost_layout = QFormLayout()
         cost_layout.setLabelAlignment(Qt.AlignRight)
-        # Valores padrão baseados na sua imagem
+
         self.imposto_input = QLineEdit("0,12") 
         self.frete_input = QLineEdit("0,26")
-        # Define uma largura máxima para os campos de custo, liberando espaço
+
         self.imposto_input.setMaximumWidth(100)
         self.frete_input.setMaximumWidth(100)
         cost_layout.addRow("Imposto (%):", self.imposto_input)
-        cost_layout.addRow("Frete (R$):", self.frete_input) #VERIFICAR
+        cost_layout.addRow("Frete (R$):", self.frete_input) 
         cost_group.setLayout(cost_layout)
         left_v_layout.addWidget(cost_group)
 
-        # --- (MODIFICADO) Grupo 3: Carregar Planilha (Opcional) --- (Era 2)
         file_group = QGroupBox("3. Carregar Planilha (Opcional)")
         file_layout = QVBoxLayout()
         self.file_label = QLabel("Nenhum projeto ativo.")
         file_button_layout = QHBoxLayout()
         self.select_file_btn = QPushButton("Selecionar Planilha")
-        self.import_dxf_btn = QPushButton("Importar DXF(s)") # <<< NOVO BOTÃO >>>
+        self.import_dxf_btn = QPushButton("Importar DXF(s)")
         self.clear_excel_btn = QPushButton("Limpar Planilha")
         file_button_layout.addWidget(self.select_file_btn)
         file_button_layout.addWidget(self.import_dxf_btn)
@@ -374,7 +358,6 @@ class MainWindow(QMainWindow):
         file_group.setLayout(file_layout)
         left_v_layout.addWidget(file_group)
 
-        # --- (MODIFICADO) Grupo 4: Informações da Peça --- (Era 3)
         manual_group = QGroupBox("4. Informações da Peça")
         manual_layout = QFormLayout()
         manual_layout.setLabelAlignment(Qt.AlignRight)
@@ -410,9 +393,8 @@ class MainWindow(QMainWindow):
         left_v_layout.addWidget(manual_group)
         left_v_layout.addStretch()
         
-        top_h_layout.addWidget(left_panel_widget) # Adiciona o painel esquerdo ao layout horizontal
+        top_h_layout.addWidget(left_panel_widget) 
 
-        # --- (MODIFICADO) Grupo 5: Furos (Painel Direito) --- (Era 4)
         furos_main_group = QGroupBox("5. Adicionar Furos")
         furos_main_layout = QVBoxLayout()
         self.rep_group = QGroupBox("Furação Rápida")
@@ -443,11 +425,11 @@ class MainWindow(QMainWindow):
         furos_main_group.setLayout(furos_main_layout)
         top_h_layout.addWidget(furos_main_group, stretch=1)
 
-        # Container para o layout superior
+ 
         top_container_widget = QWidget()
         top_container_widget.setLayout(top_h_layout)
 
-        # --- (MODIFICADO) Grupo 6: Lista de Peças --- (Era 5)
+
         list_group = QGroupBox("6. Lista de Peças para Produção")
         list_layout = QVBoxLayout()
         self.pieces_table = QTableWidget()
@@ -476,15 +458,15 @@ class MainWindow(QMainWindow):
         list_layout.addLayout(process_buttons_layout)
         list_group.setLayout(list_layout)
 
-        # --- Barra de Log/Execução ---
+
         log_group = QGroupBox("Log de Execução")
         log_layout = QVBoxLayout()
         self.log_text = QTextEdit()
-        self.log_text.setObjectName("logExecution") # Adicionado para estilo
+        self.log_text.setObjectName("logExecution") 
         log_layout.addWidget(self.log_text)
         log_group.setLayout(log_layout)
         
-        # <<< MUDANÇA ESTRUTURAL 2: USO DO QSPLITTER PARA O LAYOUT VERTICAL >>>
+
         v_splitter = QSplitter(Qt.Vertical)
         #v_splitter.addWidget(top_container_widget)
         v_splitter.addWidget(list_group)
@@ -499,13 +481,13 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(v_splitter)
         main_layout.addWidget(self.add_piece_btn)
 
-        # --- Barra de Progresso ---
+
         self.progress_bar = QProgressBar()
         main_layout.addWidget(self.progress_bar)
         
         self.statusBar().showMessage("Pronto")
         
-        # --- Aplicação de Estilos Específicos via objectName ---
+
         self.start_project_btn.setObjectName("primaryButton")
         self.conclude_project_btn.setObjectName("successButton")
         self.calculate_nesting_btn.setObjectName("warningButton")
@@ -514,10 +496,10 @@ class MainWindow(QMainWindow):
         """Método para centralizar todas as conexões de sinais e slots."""
         self.calculate_nesting_btn.clicked.connect(self.open_nesting_dialog)
         self.start_project_btn.clicked.connect(self.start_new_project)
-        self.theme_toggle_btn.clicked.connect(self.toggle_theme) # <<< CONEXÃO DO SINAL DO TEMA
+        self.theme_toggle_btn.clicked.connect(self.toggle_theme) 
         self.history_btn.clicked.connect(self.show_history_dialog)
         self.select_file_btn.clicked.connect(self.select_file)
-        self.import_dxf_btn.clicked.connect(self.import_dxfs) # <<< CONEXÃO DO SINAL >>>
+        self.import_dxf_btn.clicked.connect(self.import_dxfs) 
         self.clear_excel_btn.clicked.connect(self.clear_excel_data)
         self.generate_code_btn.clicked.connect(self.generate_piece_code)
         self.add_piece_btn.clicked.connect(self.add_manual_piece)
@@ -535,18 +517,15 @@ class MainWindow(QMainWindow):
         self.is_dark_theme = not self.is_dark_theme
         if self.is_dark_theme:
             self.theme_toggle_btn.setText("☀️ Tema Claro")
-            QApplication.instance().setStyleSheet(INOVA_PROCESS_STYLE_DARK)
+            QApplication.instance().setStyleSheet(DARK)
         else:
             self.theme_toggle_btn.setText("🌙 Tema Escuro")
-            QApplication.instance().setStyleSheet(INOVA_PROCESS_STYLE)
+            QApplication.instance().setStyleSheet(STYLE)
         self.log_text.append(f"Tema alterado para {'Escuro' if self.is_dark_theme else 'Claro'}.")
 
-    # =====================================================================
-    # --- INÍCIO: NOVA FUNÇÃO PARA OFFSET DINÂMICO (COMPARTILHADA) ---
     def _get_dynamic_offset_and_margin(self, espessura, default_offset, default_margin):
         """Retorna o offset e a margem com base na espessura."""
-        # --- CORREÇÃO: A função agora prioriza o input do usuário se for diferente do padrão '8'. ---
-        # Se o usuário inseriu um valor diferente do padrão (8), usa o valor do usuário.
+
         if abs(default_offset - 8.0) > 1e-5:
             return default_offset, default_margin
 
@@ -556,7 +535,7 @@ class MainWindow(QMainWindow):
         elif abs(espessura - 22.22) < 1e-5: return 20, default_margin
         elif 25.4 <= espessura <= 38: return 25, default_margin
         return default_offset, default_margin
-    # --- FIM: NOVA FUNÇÃO PARA OFFSET DINÂMICO ---
+
 
     def start_new_project(self):
         parent_dir = QFileDialog.getExistingDirectory(self, "Selecione a Pasta Principal para o Novo Projeto")
@@ -574,7 +553,7 @@ class MainWindow(QMainWindow):
             self.project_directory = project_path
             self.projeto_input.setText(project_name)
             self.dir_label.setText(f"Projeto Ativo: {self.project_directory}")
-            self.dir_label.setStyleSheet("font-style: normal;") # Remove cor fixa
+            self.dir_label.setStyleSheet("font-style: normal;")
             self.log_text.append(f"\n--- NOVO PROJETO INICIADO: {project_name} ---")
             self.log_text.append(f"Arquivos serão salvos em: {self.project_directory}")
             self.set_initial_button_state()
@@ -586,7 +565,7 @@ class MainWindow(QMainWindow):
         self.start_project_btn.setEnabled(True)
         self.history_btn.setEnabled(True)
         self.select_file_btn.setEnabled(is_project_active)
-        self.import_dxf_btn.setEnabled(is_project_active) # <<< ATUALIZAÇÃO DE ESTADO >>>
+        self.import_dxf_btn.setEnabled(is_project_active)
         self.clear_excel_btn.setEnabled(is_project_active and not self.excel_df.empty)
         self.generate_code_btn.setEnabled(is_project_active)
         self.add_piece_btn.setEnabled(is_project_active)
@@ -616,7 +595,7 @@ class MainWindow(QMainWindow):
         self.project_directory = project_path
         self.projeto_input.setText(project_name)
         self.excel_df = pd.DataFrame(columns=self.colunas_df)
-        self.manual_df = pd.DataFrame(pieces_data) # type: ignore
+        self.manual_df = pd.DataFrame(pieces_data)
         self.dir_label.setText(f"Projeto Ativo: {self.project_directory}"); self.dir_label.setStyleSheet("font-style: normal;")
         self.log_text.append(f"\n--- PROJETO DO HISTÓRICO CARREGADO: {project_name} ---")
         self.update_table_display()
@@ -632,12 +611,12 @@ class MainWindow(QMainWindow):
         project_number = self.projeto_input.text().strip()
         if not project_number:
             QMessageBox.warning(self, "Número do Projeto Ausente", "Por favor, defina um número para o projeto ativo."); return
-        # --- CORREÇÃO FUTUREWARNING: Concatena apenas os dataframes não vazios ---
+
         dfs_to_concat = [df for df in [self.excel_df, self.manual_df] if not df.empty]
         if not dfs_to_concat:
             QMessageBox.warning(self, "Aviso", "A lista de peças está vazia."); return
         combined_df = pd.concat(dfs_to_concat, ignore_index=True)
-        # --- FIM CORREÇÃO ---
+
         self.set_buttons_enabled_on_process(False)
         self.progress_bar.setVisible(True); self.progress_bar.setValue(0); self.log_text.clear()
         self.process_thread = ProcessThread(combined_df.copy(), generate_pdf, generate_dxf, self.project_directory, project_number)
@@ -658,11 +637,11 @@ class MainWindow(QMainWindow):
             return
         reply = QMessageBox.question(self, 'Concluir Projeto', f"Deseja salvar e concluir o projeto '{project_number}'?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
-            # --- CORREÇÃO FUTUREWARNING: Concatena apenas os dataframes não vazios ---
+
             dfs_to_concat = [df for df in [self.excel_df, self.manual_df] if not df.empty]
             if dfs_to_concat:
                 combined_df = pd.concat(dfs_to_concat, ignore_index=True)
-            # --- FIM CORREÇÃO ---
+
                 combined_df['project_number'] = project_number
                 combined_df['project_number'] = project_number
                 self.history_manager.save_project(project_number, combined_df)
@@ -674,18 +653,18 @@ class MainWindow(QMainWindow):
             self.log_text.append(f"\n--- PROJETO '{project_number}' CONCLUÍDO ---")
 
     def open_nesting_dialog(self):
-        # --- CORREÇÃO FUTUREWARNING: Concatena apenas os dataframes não vazios ---
+
         dfs_to_concat = [df for df in [self.excel_df, self.manual_df] if not df.empty]
         if not dfs_to_concat:
             QMessageBox.warning(self, "Lista Vazia", "Não há peças na lista para calcular o aproveitamento.")
             return
         combined_df = pd.concat(dfs_to_concat, ignore_index=True)
-        # --- CORREÇÃO: Inclui 'circle' na verificação de formas válidas ---
+
         valid_df = combined_df[combined_df['forma'].isin(['rectangle', 'circle', 'right_triangle', 'trapezoid', 'dxf_shape'])].copy()
         if valid_df.empty:
             QMessageBox.information(self, "Nenhuma Peça Válida", "O cálculo de aproveitamento só pode ser feito com peças da forma 'rectangle', 'circle', 'right_triangle', 'trapezoid' ou 'dxf_shape'.")
             return
-        # Passa o DataFrame com as formas válidas para o diálogo
+
         dialog = NestingDialog(valid_df, self)
         dialog.exec_()
 
@@ -695,7 +674,6 @@ class MainWindow(QMainWindow):
         dialog.setWindowTitle("Parâmetros de Exportação e Aproveitamento")
         layout = QFormLayout(dialog)
 
-        # Campos de entrada
         chapa_largura_input = QLineEdit("3000")
         chapa_altura_input = QLineEdit("1500")
         offset_input = QLineEdit("8")
@@ -709,7 +687,6 @@ class MainWindow(QMainWindow):
         layout.addRow("Offset entre Peças (mm) [Plasma/Laser]:", offset_input)
         layout.addRow("Margem da Chapa (mm) [Plasma/Laser]:", margin_input)
 
-        # Botões OK e Cancelar
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         button_box.accepted.connect(dialog.accept)
         button_box.rejected.connect(dialog.reject)
@@ -750,11 +727,8 @@ class MainWindow(QMainWindow):
         if not save_path:
             return
 
-        # --- INÍCIO DA CORREÇÃO ---
-        # Armazena o nome do projeto em uma variável de ambiente para ser acessível
-        # pela função 'encontrar_sobras' no outro módulo.
         os.environ['CURRENT_PROJECT_NAME'] = project_number
-        # --- FIM DA CORREÇÃO ---
+
         self.set_buttons_enabled_on_process(False)
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
@@ -771,7 +745,7 @@ class MainWindow(QMainWindow):
             wb = load_workbook(template_path)
             ws = wb.active
             
-            # --- PASSO 1: PREENCHER IMPOSTO (A2) E FRETE (C2) ---
+
             try:
                 imposto_val = float(self.imposto_input.text().replace(',', '.'))
                 frete_val = float(self.frete_input.text().replace(',', '.'))
@@ -786,18 +760,16 @@ class MainWindow(QMainWindow):
             self.log_text.append("Preenchendo lista de peças...")
             QApplication.processEvents()
             
-            start_row = 4 # A lista de peças sempre começará a ser preenchida na linha 4
-            last_filled_row = start_row - 1 # Guarda a última linha preenchida
+            start_row = 4 
+            last_filled_row = start_row - 1 
 
-            # --- INÍCIO DA CORREÇÃO ---
-            # Cria uma lista para armazenar todas as sobras aproveitáveis de todos os cálculos
+
             todas_as_sobras_aproveitaveis = []
-            # --- FIM DA CORREÇÃO ---
 
-            # --- PASSO 2: PREENCHER A LISTA DE PEÇAS (COLUNAS A ATÉ I) ---
+
             for index, (_, row_data) in enumerate(combined_df.iterrows()):
                 current_row = start_row + index
-                last_filled_row = current_row # Atualiza a última linha
+                last_filled_row = current_row 
                 
                 ws.cell(row=current_row, column=1, value=project_number)
                 ws.cell(row=current_row, column=2, value=row_data.get('nome_arquivo', ''))
@@ -816,9 +788,9 @@ class MainWindow(QMainWindow):
                 ws.cell(row=current_row, column=5, value=num_furos)
                 ws.cell(row=current_row, column=6, value=furos[0].get('diam', 0) if num_furos > 0 else 0)
                 
-                # Esta é a 'ESPESSURA' da Coluna G
+
                 espessura_peca = row_data.get('espessura', 0)
-                ws.cell(row=current_row, column=7, value=espessura_peca) # <--- COLUNA G
+                ws.cell(row=current_row, column=7, value=espessura_peca) 
                 
                 ws.cell(row=current_row, column=8, value=largura)
                 ws.cell(row=current_row, column=9, value=altura)
@@ -831,29 +803,29 @@ class MainWindow(QMainWindow):
             valid_nesting_df = combined_df[combined_df['forma'].isin(['rectangle', 'circle', 'right_triangle', 'trapezoid', 'dxf_shape'])].copy()
             valid_nesting_df['espessura'] = valid_nesting_df['espessura'].astype(float)
             
-            # Agrupa as peças pela espessura (Coluna G)
-            grouped = valid_nesting_df.groupby('espessura') # <--- AGRUPANDO PELA COLUNA G
+
+            grouped = valid_nesting_df.groupby('espessura')
             
-            current_row = 212 # O relatório sempre começará na linha 212
+            current_row = 212 
             ws.cell(row=current_row, column=1, value="RELATÓRIO DE APROVEITAMENTO DE CHAPA").font = Font(bold=True, size=14)
             current_row += 2
 
-            # --- (NOVO) Variáveis para Perca Ponderada REAL ---
+
             total_perca_ponderada_real = 0.0
             total_pecas_contadas_real = 0.0
-            perda_results_map = {} # Dicionário para salvar {espessura: percent_loss}
+            perda_results_map = {}
 
-            # --- Inicia o loop para processar por espessura (baseado na Coluna G) ---
+
             for espessura, group in grouped:
                 is_guillotine = params["method"] == "Guilhotina"
                 
                 if is_guillotine:
-                    # ... (lógica da guilhotina) ...
+
                     current_offset, refila = 0, 2 * espessura
                     sheet_width_for_calc, sheet_height_for_calc = params["chapa_largura"] - refila, params["chapa_altura"]
                     effective_margin = 0
-                else: # Plasma/Laser
-                    # ... (lógica plasma/laser) ...
+                else: 
+
                     current_offset, _ = self._get_dynamic_offset_and_margin(espessura, params["offset"], params["margin"])
                     effective_margin = 10 - (current_offset / 2)
                     sheet_width_for_calc, sheet_height_for_calc = params["chapa_largura"], params["chapa_altura"]
@@ -864,7 +836,7 @@ class MainWindow(QMainWindow):
                 for _, row in group.iterrows():
                     qtd = int(row['qtd'])
                     total_pecas_neste_grupo += qtd
-                    # ... (adiciona peças ao 'pecas_para_calcular') ...
+
                     if row['forma'] == 'rectangle' and row['largura'] > 0 and row['altura'] > 0:
                         pecas_para_calcular.append({'forma': 'rectangle', 'largura': row['largura'], 'altura': row['altura'], 'quantidade': qtd})
                     elif row['forma'] == 'circle' and row['diametro'] > 0:
@@ -889,31 +861,29 @@ class MainWindow(QMainWindow):
                     if 'small_base' in p_copy: p_copy['small_base'] += current_offset
                     pecas_com_offset.append(p_copy)
                 
-                # --- O CÁLCULO DE NESTING É FEITO AQUI ---
+
                 resultado = orquestrar_planos_de_corte(sheet_width_for_calc, sheet_height_for_calc, pecas_com_offset, current_offset, effective_margin, espessura, is_guillotine, status_signal_emitter=None)
                 
                 if not resultado: continue
 
-                # --- INÍCIO DA CORREÇÃO ---
-                # Coleta as sobras aproveitáveis do resultado do nesting
+
                 for plano in resultado.get('planos_unicos', []):
                     for sobra in plano.get('sobras', []):
                         if sobra.get('tipo_sobra') == 'aproveitavel':
-                            # Adiciona a sobra com a espessura e quantidade de repetições do plano
+
                             sobra['espessura'] = espessura
                             sobra['qtd'] = plano.get('repeticoes', 1)
                             todas_as_sobras_aproveitaveis.append(sobra)
-                # --- FIM DA CORREÇÃO ---
-                # --- (NOVO) PASSO 4: Captura da PERCA REAL calculada ---
+
                 percentual_perda = resultado.get('percentual_perda_total_sucata', 0)
                 
-                # Salva o resultado (ex: {12.7: 20.43})
+
                 perda_results_map[espessura] = percentual_perda 
                 
                 total_perca_ponderada_real += (percentual_perda * total_pecas_neste_grupo)
                 total_pecas_contadas_real += total_pecas_neste_grupo
 
-                # --- ESCRITA DO RELATÓRIO DE NESTING (A212 em diante) ---
+
                 ws.cell(row=current_row, column=1, value=f"Espessura: {espessura} mm").font = Font(bold=True, size=12)
                 current_row += 1
                 total_chapas_usadas = resultado['total_chapas']
@@ -924,7 +894,7 @@ class MainWindow(QMainWindow):
                 current_row += 2
 
                 for i, plano_info in enumerate(resultado['planos_unicos']):
-                    # ... (escreve planos de corte) ...
+
                     ws.cell(row=current_row, column=1, value=f"Plano de Corte {i+1} (Repetir {plano_info['repeticoes']}x)").font = Font(italic=True)
                     current_row += 1
                     ws.cell(row=current_row, column=2, value="Peças neste plano:")
@@ -936,7 +906,7 @@ class MainWindow(QMainWindow):
 
                 sucata_info = resultado.get('sucata_detalhada')
                 if sucata_info:
-                    # ... (escreve todo o detalhamento de sucata) ...
+
                     bold_font = Font(bold=True)
                     ws.cell(row=current_row, column=1, value="Peso do Offset (perda de corte):").font = bold_font
                     ws.cell(row=current_row, column=2, value=f"{sucata_info['peso_offset']:.2f} kg")
@@ -986,11 +956,7 @@ class MainWindow(QMainWindow):
                 cell.fill = PatternFill(start_color="D3D3D3", end_color="D3D3D3", fill_type="solid")
                 current_row += 2
                 self.progress_bar.setValue(50 + int((current_row / 400) * 50))
-            
-            # --- FIM DO LOOP DE NESTING ---
 
-            # --- INÍCIO DA LÓGICA CONDICIONAL PARA SOBRAS ---
-            # Verifica se o nome do projeto contém as palavras-chave para materiais especiais.
             project_name_upper = project_number.upper()
             is_special_material = any(keyword in project_name_upper for keyword in ['FF', 'GALV', 'XADREZ'])
 
@@ -998,7 +964,6 @@ class MainWindow(QMainWindow):
                 self.log_text.append("Material especial detectado. Adicionando sobras aproveitáveis à lista de peças...")
                 QApplication.processEvents()
 
-                # Agrupa sobras por dimensões e espessura para somar as quantidades
                 sobras_agrupadas = {}
                 for s in todas_as_sobras_aproveitaveis:
                     chave = (round(s['largura']), round(s['altura']), s['espessura'])
@@ -1006,9 +971,9 @@ class MainWindow(QMainWindow):
                         sobras_agrupadas[chave] = {'qtd': 0, 'largura': s['largura'], 'altura': s['altura'], 'espessura': s['espessura']}
                     sobras_agrupadas[chave]['qtd'] += s['qtd']
 
-                # Itera sobre as sobras agrupadas e as adiciona na planilha
+
                 for sobra_agrupada in sobras_agrupadas.values():
-                    last_filled_row += 1 # Move para a próxima linha vazia
+                    last_filled_row += 1
                     
                     ws.cell(row=last_filled_row, column=1, value=project_number)
                     ws.cell(row=last_filled_row, column=2, value="SOBRA") # Nome da peça
@@ -1020,7 +985,6 @@ class MainWindow(QMainWindow):
                     ws.cell(row=last_filled_row, column=8, value=sobra_agrupada['largura']) # Largura
                     ws.cell(row=last_filled_row, column=9, value=sobra_agrupada['altura']) # Altura
 
-                # Re-oculta as linhas, agora considerando as novas linhas de sobra
                 start_hide_row = last_filled_row + 1
                 end_hide_row = 207 
                 if start_hide_row <= end_hide_row:
@@ -1029,41 +993,29 @@ class MainWindow(QMainWindow):
             else:
                 if not is_special_material:
                     self.log_text.append("Projeto não é de material especial. Sobras não serão adicionadas à planilha.")
-            # --- FIM DA LÓGICA CONDICIONAL PARA SOBRAS ---
-            
-            # --- PASSO 3: PREENCHER PERDA (D2) COM BASE NOS RESULTADOS REAIS ---
+
+
             if total_pecas_contadas_real > 0:
                 avg_loss_real = total_perca_ponderada_real / total_pecas_contadas_real if total_pecas_contadas_real > 0 else 0
-                # A perca é um percentual (ex: 20.01), mas a célula D2 espera um decimal (ex: 0.2001)
+
                 ws['D2'] = avg_loss_real / 100.0 
                 self.log_text.append(f"Perca média ponderada REAL ({avg_loss_real:.2f}%) preenchida em D2.")
             else:
                 ws['D2'] = 0
                 self.log_text.append("Nenhuma peça para calcular perca real. Preenchido 0 em D2.")
 
-            # --- PASSO 4: PREENCHER COLUNA W (PERDA POR ESPESSURA) ---
             self.log_text.append("Atualizando tabela de perdas (Coluna W) com resultados do nesting...")
 
-            # Passo A: Normaliza as chaves do mapa de resultados para floats arredondados.
             perda_map_arredondado = {round(float(k), 2): v for k, v in perda_results_map.items()}
-
-            # <<< INÍCIO DA CORREÇÃO >>>
-            
-            # CORREÇÃO 1: O range correto.
-            # A sua tabela de 25 itens (da imagem) muito provavelmente começa na linha 215.
-            # Linha 213 = Título ("Perda não cobrada")
-            # Linha 214 = Cabeçalho ("ESPESSURA")
-            # Linha 215 = Dado ("1,20")
-            # O range(215, 240) cobre 25 linhas (de 215 a 239).
-            
+      
             start_row = 213
             num_rows = 25
-            end_row_exclusive = start_row + num_rows # 213 + 25 = 238
+            end_row_exclusive = start_row + num_rows 
             
             self.log_text.append(f"Atualizando {num_rows} linhas da tabela de perdas (V{start_row}:W{end_row_exclusive - 1})...")
 
             # Itera pelas 25 linhas da tabela
-            for row_idx in range(start_row, end_row_exclusive):  # range(213, 238)
+            for row_idx in range(start_row, end_row_exclusive):  # range(213, 238) 
                 # Coluna V (ESPESSURA)
                 esp_cell = ws.cell(row=row_idx, column=22) 
                 
@@ -1073,41 +1025,38 @@ class MainWindow(QMainWindow):
                     continue
                     
                 try:
-                    # CORREÇÃO 2: A falha principal.
-                    # A planilha usa VÍRGULA ("1,20"). O float() do Python falha com vírgulas.
-                    # Convertemos para string, trocamos a vírgula por ponto, e SÓ ENTÃO convertemos para float.
+
                     
                     esp_valor_str = str(esp_cell.value).replace(',', '.')
                     esp_template = round(float(esp_valor_str), 2)
                     
-                    # Procura a espessura no mapa de resultados do nesting
+
                     if esp_template in perda_map_arredondado:
-                        # Encontrou! Escreve o valor calculado (ex: 20.43% -> 0.2043)
+
                         perda_para_escrever = perda_map_arredondado[esp_template] / 100.0
-                        ws.cell(row=row_idx, column=23, value=perda_para_escrever) # Coluna W
+                        ws.cell(row=row_idx, column=23, value=perda_para_escrever)
                     else:
-                        # Se a espessura existe na tabela mas NÃO foi
-                        # calculada, zera o valor para não usar dado antigo.
-                        ws.cell(row=row_idx, column=23, value=0.0) # Coluna W
+
+                        ws.cell(row=row_idx, column=23, value=0.0)
                         
                 except (ValueError, TypeError):
-                    # Se ainda assim falhar (ex: a célula é texto), loga e deixa em branco
+
                     self.log_text.append(f"AVISO: Valor não numérico na célula V{row_idx}: '{esp_cell.value}'. Deixando em branco.")
-                    ws.cell(row=row_idx, column=23, value=None) # Coluna W
+                    ws.cell(row=row_idx, column=23, value=None)
                     continue
 
-            # --- PASSO 5: OCULTAR LINHAS (LÓGICA CORRIGIDA E MOVIDA PARA O FINAL) ---
+
             try:
-                # A última linha preenchida (last_filled_row) agora inclui as sobras, se houver.
+
                 start_hide_row = last_filled_row + 1
-                end_hide_row = 207 # Linha final para ocultar (antes do relatório)
+                end_hide_row = 207 
                 
                 if start_hide_row <= end_hide_row:
-                    # Oculta o grupo de linhas de uma vez
+
                     ws.row_dimensions.group(start_hide_row, end_hide_row, hidden=True)
                     self.log_text.append(f"Linhas da {start_hide_row} até {end_hide_row} ocultadas com sucesso.")
                 else:
-                    # Isso pode acontecer se a lista de peças + sobras for muito grande
+
                     self.log_text.append(f"Nenhuma linha para ocultar (Última linha preenchida: {last_filled_row}).")
             except Exception as e:
                 self.log_text.append(f"AVISO: Falha ao ocultar linhas. {e}")
@@ -1125,11 +1074,11 @@ class MainWindow(QMainWindow):
         finally:
             self.set_buttons_enabled_on_process(True)
             self.progress_bar.setVisible(False)
-            # --- INÍCIO DA CORREÇÃO ---
-            # Limpa a variável de ambiente após o uso
+
+
             if 'CURRENT_PROJECT_NAME' in os.environ:
                 del os.environ['CURRENT_PROJECT_NAME']
-            # --- FIM DA CORREÇÃO ---
+
         
 
     def _generate_pdf_from_excel(self, excel_path, num_pecas):
@@ -1147,7 +1096,7 @@ class MainWindow(QMainWindow):
         pdf_filename = os.path.splitext(excel_path)[0] + ".pdf"
         HEADER_ROW = 3 
         START_ROW = 4 
-        TOTAL_ROW = 209 # Linha "TOTAIS" ou "OBS SOBRE A PRODUÇÃO"
+        TOTAL_ROW = 209 
         LAST_EMPTY_ROW = 207 
 
         excel = None
@@ -1170,33 +1119,29 @@ class MainWindow(QMainWindow):
             
             workbook = excel.Workbooks.Open(full_excel_path)
             
-            # --- (CORREÇÃO 1) ---
-            # Seleciona a planilha pelo nome exato (baseado nas suas imagens)
-            # É mais seguro que usar "ActiveSheet"
+
             sheet = workbook.Worksheets("PEÇAS PADRÃO")
             sheet.Activate()
-            # --- (FIM DA CORREÇÃO 1) ---
             
-            sheet.Rows.Hidden = False # Desoculta tudo primeiro
+            sheet.Rows.Hidden = False 
             if range_to_hide:
                 self.log_text.append(f"Ocultando linhas {range_to_hide} para o PDF...")
                 sheet.Rows(range_to_hide).Hidden = True
             
-            # (CORRIGIDO) Define a área de impressão para A3:V208
-            # A linha 208 contém os "TOTAIS" e queremos incluí-la
+
             print_area_range = f"A{HEADER_ROW}:V{TOTAL_ROW}" 
             sheet.PageSetup.PrintArea = print_area_range
             
             sheet.PageSetup.Zoom = False
             sheet.PageSetup.FitToPagesWide = 1 
             sheet.PageSetup.FitToPagesTall = 1 
-            sheet.PageSetup.Orientation = 2 # 2 = xlLandscape (Paisagem)
+            sheet.PageSetup.Orientation = 2
             
             full_pdf_path = os.path.abspath(pdf_filename)
             self.log_text.append(f"Exportando PDF para: {full_pdf_path}...")
             
-            # Exporta APENAS a planilha ativa
-            sheet.ExportAsFixedFormat(0, full_pdf_path) # 0 = xlTypePDF
+
+            sheet.ExportAsFixedFormat(0, full_pdf_path)
             
             self.log_text.append(f"✅ SUCESSO! PDF do orçamento gerado.")
 
@@ -1205,11 +1150,10 @@ class MainWindow(QMainWindow):
             self.log_text.append("Verifique se o Excel está instalado e se o pywin32 foi registrado (pywin32_postinstall.py -install).")
         
         finally:
-            # --- (CORREÇÃO 2) ---
-            # Adiciona try/except para evitar o erro "Objeto desconectado"
+
             try:
                 if workbook:
-                    workbook.Close(SaveChanges=False) # Não salvar (já foi salvo pelo openpyxl)
+                    workbook.Close(SaveChanges=False) 
                 if excel:
                     excel.Quit()
                 del excel 
@@ -1217,11 +1161,10 @@ class MainWindow(QMainWindow):
             except Exception as e_cleanup:
                 self.log_text.append(f"[AVISO] Erro durante a limpeza do COM: {e_cleanup}")
                 try:
-                    # Garante que o COM seja liberado mesmo se o excel.Quit() falhar
+                    
                     pythoncom.CoUninitialize()
                 except:
                     pass 
-            # --- (FIM DA CORREÇÃO 2) ---
 
     def _clear_session(self, clear_project_number=False):
         fields_to_clear = [self.nome_input, self.espessura_input, self.qtd_input, self.largura_input, self.altura_input, self.diametro_input, self.rt_base_input, self.rt_height_input, self.trapezoid_large_base_input, self.trapezoid_small_base_input, self.trapezoid_height_input, self.rep_diam_input, self.rep_offset_input, self.diametro_furo_input, self.pos_x_input, self.pos_y_input]
@@ -1243,9 +1186,9 @@ class MainWindow(QMainWindow):
         self.calculate_nesting_btn.setEnabled(enabled and is_project_active and has_items)
         self.start_project_btn.setEnabled(enabled)
         self.history_btn.setEnabled(enabled)
-        self.theme_toggle_btn.setEnabled(enabled) # <<< ATUALIZAÇÃO DE ESTADO >>>
+        self.theme_toggle_btn.setEnabled(enabled)
         self.select_file_btn.setEnabled(enabled and is_project_active)
-        self.import_dxf_btn.setEnabled(enabled and is_project_active) # <<< ATUALIZAÇÃO DE ESTADO >>>
+        self.import_dxf_btn.setEnabled(enabled and is_project_active) 
         self.clear_excel_btn.setEnabled(enabled and is_project_active and not self.excel_df.empty)
         self.generate_code_btn.setEnabled(enabled and is_project_active)
         self.add_piece_btn.setEnabled(enabled and is_project_active)
@@ -1259,7 +1202,7 @@ class MainWindow(QMainWindow):
 
     def update_table_display(self):
         self.set_initial_button_state()
-        # --- CORREÇÃO FUTUREWARNING: Concatena apenas os dataframes não vazios ---
+        
         dfs_to_concat = [df for df in [self.excel_df, self.manual_df] if not df.empty]
         if dfs_to_concat:
             combined_df = pd.concat(dfs_to_concat, ignore_index=True)
@@ -1323,7 +1266,7 @@ class MainWindow(QMainWindow):
         is_from_excel = row_index < len_excel
         df_source = self.excel_df if is_from_excel else self.manual_df
         local_index = row_index if is_from_excel else row_index - len_excel
-        if local_index >= len(df_source): return # Proteção contra índice inválido
+        if local_index >= len(df_source): return 
         piece_data = df_source.iloc[local_index]
         self.nome_input.setText(str(piece_data.get('nome_arquivo', '')))
         self.espessura_input.setText(str(piece_data.get('espessura', '')))
@@ -1351,7 +1294,7 @@ class MainWindow(QMainWindow):
         is_from_excel = row_index < len_excel
         df_source = self.excel_df if is_from_excel else self.manual_df
         local_index = row_index if is_from_excel else row_index - len_excel
-        if local_index >= len(df_source): return # Proteção contra índice inválido
+        if local_index >= len(df_source): return 
         piece_name = df_source.iloc[local_index]['nome_arquivo']
         df_source.drop(df_source.index[local_index], inplace=True)
         df_source.reset_index(drop=True, inplace=True)
@@ -1361,7 +1304,7 @@ class MainWindow(QMainWindow):
     def generate_piece_code(self):
         project_number = self.projeto_input.text().strip()
         if not project_number: QMessageBox.warning(self, "Campo Obrigatório", "Inicie um projeto para definir o 'Nº do Projeto'."); return
-        new_code = self.code_generator.generate_new_code(project_number, prefix='VDS') #SUFIXO DOS CÓDIGOS
+        new_code = self.code_generator.generate_new_code(project_number, prefix='VDS') #--- SUFIXO DOS CÓDIGOS --- CONFIGURAÇÃO DO SUFIXO AQUI ---
         if new_code: self.nome_input.setText(new_code); self.log_text.append(f"Código '{new_code}' gerado para o projeto '{project_number}'.")
     
     def add_manual_piece(self):
@@ -1372,14 +1315,12 @@ class MainWindow(QMainWindow):
                 return
 
             new_piece = {'furos': self.furos_atuais.copy()}
-            
-            # Garante que todas as colunas do DF existam no dicionário,
-            # mesmo que com valor 0 ou None, para o .loc funcionar
+
             for col in self.colunas_df:
                 if col not in new_piece:
-                    new_piece[col] = 0.0 # ou pd.NA se preferir
+                    new_piece[col] = 0.0 
 
-            # Preenche o dicionário 'new_piece' com os dados da interface
+
             new_piece.update({
                 'nome_arquivo': nome, 
                 'forma': self.forma_combo.currentText()
@@ -1401,11 +1342,8 @@ class MainWindow(QMainWindow):
             for key, field in fields_map.items():
                 new_piece[key] = float(field.text().replace(',', '.')) if field.text() else 0.0
 
-            # --- CORREÇÃO AQUI ---
-            # Em vez de pd.concat, usamos .loc para adicionar a nova linha (dicionário)
-            # ao final do DataFrame. É mais limpo e evita o FutureWarning.
+            
             self.manual_df.loc[len(self.manual_df)] = new_piece
-            # --- FIM DA CORREÇÃO ---
 
             self.log_text.append(f"Peça '{nome}' adicionada/atualizada.")
             self._clear_session(clear_project_number=False)
@@ -1430,12 +1368,7 @@ class MainWindow(QMainWindow):
             df.columns = df.columns.str.strip().str.lower()
             self.log_text.append(f"Lendo arquivo: {os.path.basename(file_path)}")
 
-            # --- INÍCIO DA CORREÇÃO (Leitura de Furos) ---
-            # O código anterior procurava uma coluna 'furos' com JSON.
-            # Esta nova lógica lê as colunas 'furo_N_...' (formato wide)
-            # e as transforma no formato de lista que o app espera.
-
-            # 1. Padronizar nomes de colunas (ex: 'furo_1_diam' -> 'furo_1_diametro')
+          
             rename_map = {}
             for col in df.columns:
                 if 'furo_' in col and col.endswith('_diam'):
@@ -1444,10 +1377,7 @@ class MainWindow(QMainWindow):
                 df = df.rename(columns=rename_map)
                 self.log_text.append(f"Colunas de diâmetro padronizadas.")
 
-            # 2. Definir os grupos de furos que vamos procurar
-            #    (Aumente o 'max_furos' se houver mais grupos)
             
-            # <<< ATUALIZAÇÃO: Alterado de 6 para 8 >>>
             max_furos = 8 
             
             furo_grupos = []
@@ -1458,7 +1388,7 @@ class MainWindow(QMainWindow):
                     'y': f'furo_{i}_y'
                 })
 
-            # 3. Função para ser aplicada em cada *linha* do DataFrame
+            
             def processar_furos_da_linha(row):
                 furos_encontrados = []
                 for grupo in furo_grupos:
@@ -1466,16 +1396,15 @@ class MainWindow(QMainWindow):
                     col_x = grupo['x']
                     col_y = grupo['y']
                     
-                    # Verifica se as colunas necessárias existem no DataFrame
+                    
                     if col_diam in row and col_x in row and col_y in row:
                         try:
-                            # Tenta converter os valores para numérico
+                            
                             diam = pd.to_numeric(row[col_diam], errors='coerce')
                             x = pd.to_numeric(row[col_x], errors='coerce')
                             y = pd.to_numeric(row[col_y], errors='coerce')
                             
-                            # Apenas adiciona se o diâmetro for um número válido e > 0
-                            # e as coordenadas X/Y também forem válidas
+                           
                             if pd.notna(diam) and diam > 0 and pd.notna(x) and pd.notna(y):
                                 furos_encontrados.append({
                                     'diam': float(diam),
@@ -1483,26 +1412,20 @@ class MainWindow(QMainWindow):
                                     'y': float(y)
                                 })
                         except Exception:
-                            # Ignora erros de conversão nesta linha/coluna específica
+                           
                             pass
                 return furos_encontrados
 
-            # 4. Aplica a função e cria a coluna 'furos' que o app espera
             df['furos'] = df.apply(processar_furos_da_linha, axis=1)
+              
+            df = df.loc[:, ~df.columns.duplicated()] 
             
-            # --- FIM DA CORREÇÃO ---
-
-            # O resto da lógica (criar colunas faltantes, converter numéricos)
-            # agora pode ser executado.
             
-            df = df.loc[:, ~df.columns.duplicated()] # Remove colunas duplicadas
-            
-            # Garante que todas as colunas que o app precisa existam
             for col in self.colunas_df:
                 if col not in df.columns: 
                     df[col] = pd.NA
             
-            # Converte colunas numéricas principais (muitas colunas de furo já são numéricas)
+            
             numeric_cols = [
                 'espessura', 'qtd', 'largura', 'altura', 'diametro', 'rt_base', 'rt_height', 
                 'trapezoid_large_base', 'trapezoid_small_base', 'trapezoid_height'
@@ -1510,11 +1433,11 @@ class MainWindow(QMainWindow):
             
             for col in numeric_cols:
                 if col in df.columns:
-                    # Garante que a coluna 'furos' não seja tocada aqui
+                    
                     if col != 'furos':
                         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
             
-            # Filtra o DF final para ter apenas as colunas esperadas
+            
             self.excel_df = df[self.colunas_df].copy()
             
             self.file_label.setText(f"Planilha: {os.path.basename(file_path)}")
@@ -1610,13 +1533,9 @@ class MainWindow(QMainWindow):
         if 0 <= row_index < len(self.furos_atuais):
             del self.furos_atuais[row_index]
             self.update_furos_table()
-
-# =============================================================================
-# PONTO DE ENTRADA DA APLICAÇÃO
-# =============================================================================
 def main():
     app = QApplication(sys.argv)
-    app.setStyleSheet(INOVA_PROCESS_STYLE)
+    app.setStyleSheet(STYLE)
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
