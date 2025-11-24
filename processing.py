@@ -1,3 +1,4 @@
+# versao 1.0.6  19/11/2025
 # arquivo de processamento de dados em segundo plano
 
 import os
@@ -7,7 +8,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 
-# Importa os módulos de geração de arquivos
+# impports dos modulos internos
 import dxf_engine
 import pdf_generator 
 

@@ -1,4 +1,4 @@
-# main.py (VERSÃO OTIMIZADA COM LAYOUT RESPONSIVO E NOVAS FUNÇÕES DE CUSTO)
+# versão 2.0.3  19/11/2025
 
 from openpyxl.styles import PatternFill, Font
 from openpyxl import load_workbook
@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QFileDialog, QProgressBar, QMessageBox, QGroupBox,
                              QFormLayout, QLineEdit, QComboBox, QTableWidget, 
                              QTableWidgetItem, QDialog, QInputDialog, QHeaderView,
-                             QSplitter, QDialogButtonBox) # <<< IMPORTAÇÃO NECESSÁRIA >>>
+                             QSplitter, QDialogButtonBox) #importacao do pyqt5
 from PyQt5.QtCore import Qt
 try:
     import win32com.client
@@ -21,13 +21,13 @@ except ImportError:
     PYWIN32_DISPONIVEL = False
     print("AVISO: 'pywin32' não encontrado. Geração de PDF do orçamento será pulada.")
     print("Para instalar, rode: pip install pywin32")
-# <<< IMPORTAÇÕES DAS CLASSES ENCAPSULADAS >>>
+#classes encapsuladas em outros arquivos
 from code_manager import CodeGenerator
 from history_manager import HistoryManager
 from history_dialog import HistoryDialog
 from processing import ProcessThread
 from nesting_dialog import NestingDialog
-from dxf_engine import get_dxf_bounding_box # <<< IMPORTAÇÃO NECESSÁRIA >>>
+from dxf_engine import get_dxf_bounding_box #importar funcao de dxf_engine
 from calculo_cortes import orquestrar_planos_de_corte
 
 
@@ -1014,12 +1014,12 @@ class MainWindow(QMainWindow):
             
             self.log_text.append(f"Atualizando {num_rows} linhas da tabela de perdas (V{start_row}:W{end_row_exclusive - 1})...")
 
-            # Itera pelas 25 linhas da tabela
-            for row_idx in range(start_row, end_row_exclusive):  # range(213, 238) 
-                # Coluna V (ESPESSURA)
+ 
+            for row_idx in range(start_row, end_row_exclusive):  
+
                 esp_cell = ws.cell(row=row_idx, column=22) 
                 
-                # Se a célula V estiver vazia, limpa a célula W
+
                 if esp_cell.value is None or str(esp_cell.value).strip() == "": 
                     ws.cell(row=row_idx, column=23, value=None) # Coluna W
                     continue
@@ -1470,18 +1470,18 @@ class MainWindow(QMainWindow):
             if largura is not None and altura is not None:
                 nome_arquivo = os.path.splitext(os.path.basename(file_path))[0]
                 
-                new_piece = { # type: ignore
+                new_piece = { 
                     'nome_arquivo': nome_arquivo,
-                    'forma': 'rectangle', # Sempre será retângulo
+                    'forma': 'rectangle', 
                     'forma': 'dxf_shape',
-                    'espessura': 0.0, # Padrão, para ser editado pelo usuário
+                    'espessura': 0.0, # Padrão
                     'qtd': 1, # Padrão
                     'largura': round(largura, 2),
                     'altura': round(altura, 2),
                     'diametro': 0.0, 'rt_base': 0.0, 'rt_height': 0.0,
                     'trapezoid_large_base': 0.0, 'trapezoid_small_base': 0.0, 'trapezoid_height': 0.0,
                     'furos': [],
-                    'dxf_path': file_path # Armazena o caminho do arquivo
+                    'dxf_path': file_path
                 }
                 self.manual_df = pd.concat([self.manual_df, pd.DataFrame([new_piece])], ignore_index=True)
                 imported_count += 1

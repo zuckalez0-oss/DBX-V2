@@ -1,4 +1,4 @@
-# history_manager.py
+# history_manager.py versão 1.0.5  18/11/2025
 
 import json
 from datetime import datetime

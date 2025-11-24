@@ -1,4 +1,5 @@
-# history_dialog.py
+# historico do log das alteracoes
+# history_dialog.py versão 1.0.5  18/11/2025
 
 from PyQt5.QtWidgets import (QDialog, QHBoxLayout, QVBoxLayout, QGroupBox, 
                              QListWidget, QTableWidget, QTableWidgetItem, 

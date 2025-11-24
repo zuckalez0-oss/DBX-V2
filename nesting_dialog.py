@@ -1,3 +1,5 @@
+#dialogo de nesting para calculo de aproveitamento de chapa 
+# versao 1.0.3  19/11/2025
 import sys
 import os
 import colorsys

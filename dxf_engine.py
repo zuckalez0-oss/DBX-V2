@@ -6,7 +6,7 @@ import io
 import ezdxf
 from ezdxf import bbox
 
-# --- FUNÇÕES DE CRIAÇÃO DE DXF ---
+#func criação do desenho dxf
 def create_dxf_drawing(params: dict):
     """Gera um desenho DXF a partir de um dicionário de parâmetros já preparado."""
     try:

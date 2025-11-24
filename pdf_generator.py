@@ -1,3 +1,4 @@
+# versao 1.0.4  19/11/2025
 # gerador dos PDFs dos desenhos técnicos das peças.
 
 import ezdxf
@@ -5,7 +6,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 
-# ---CONSTANTES GLOBAIS DE LAYOUT DA PÁGINA---
+# const glbais de pagina e margens
 
 PAGE_WIDTH, PAGE_HEIGHT = A4
 MARGEM_GERAL = 15 * mm
